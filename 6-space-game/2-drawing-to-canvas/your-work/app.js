@@ -8,16 +8,46 @@ function loadTexture(path) {
   });
 }
 
-async function createSnakeFood(ctx) {
-  //load and draw snack
-  const snack = await loadTexture(
-    "/6-space-game/2-drawing-to-canvas/your-work/assets/cookie-solid.svg"
-  );
-  let x = Math.floor(Math.random() * 26);
-  let y = Math.floor(Math.random() * 26);
+function createSnakeFood(ctx, playersPosition, snack) {
+  let tempX = randomNumberX(playersPosition);
+  let tempY = randomNumberY(playersPosition);
+  let xCoordinate = tempX * 20;
+  let yCoordinate = tempY * 20;
+  playersPosition.push({ x: tempX, y: tempX });
+  console.log("players position");
+  console.log(playersPosition);
   //26 x 26 grid. each square is 20 pixels in height and width
   //every 20 pixels is another tile
-  ctx.drawImage(snack, 20, 20, 20, 20);
+  ctx.drawImage(snack, xCoordinate, yCoordinate, 20, 20);
+}
+
+function randomNumberX(playersPosition) {
+  let newNum = Math.floor(Math.random() * 26);
+
+  // NEED TO TEST THIS
+  // verify this by filling out the rest of the table with cookies, and verify the only ones left are valid
+  for (let i = 0; i < playersPosition.length; i++) {
+    console.log(playersPosition[i].x);
+    if (playersPosition[i].x == newNum) {
+      newNum = Math.floor(Math.random() * 26);
+      i--;
+    }
+  }
+  return newNum;
+}
+
+function randomNumberY(playersPosition) {
+  let newNum = Math.floor(Math.random() * 26);
+
+  // NEED TO TEST THIS
+  // verify this by filling out the rest of the table with cookies, and verify the only ones left are valid
+  for (let i = 0; i < playersPosition.length; i++) {
+    if (playersPosition[i].y == newNum) {
+      newNum = Math.floor(Math.random() * 26);
+      i--;
+    }
+  }
+  return newNum;
 }
 
 function roundedRect(ctx, x, y, width, height, radius) {
@@ -37,18 +67,28 @@ window.onload = async () => {
 
   //load and draw player
   //220, 220, 20, 20 would be the ideal number. But to center it, I use 222, 222, 16
-  roundedRect(ctx, 222, 222, 16, 16, 1);
-  roundedRect(ctx, 222, 202, 16, 16, 1);
-  roundedRect(ctx, 222, 182, 16, 16, 1);
-  // ctx.fillRect(222, 222, 16, 16);
-  // ctx.fillRect(222, 202, 16, 16);
-  // ctx.fillRect(222, 182, 16, 16);
+  // (x * 20) - 20
+  //TODO uncomment the below 3 lines after testing
+  roundedRect(ctx, 2, 2, 16, 16, 1);
+  roundedRect(ctx, 2, 22, 16, 16, 1);
+  roundedRect(ctx, 2, 42, 16, 16, 1);
 
-  //TODO create function that will get the player's current position, and spawn in the snake food not in this
-  //this needs to run after the player is created and moved. The snake food MUST NOT overlap with the player
-  //this will need to be checked everytime the snake food is spawned.
-  createSnakeFood(ctx);
+  let playersPosition = [
+    { x: 0, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: 2 },
+  ];
 
-  // TODO uncomment the next line when you add enemies to screen
-  //createEnemies(ctx, canvas, enemyImg);
+  //TODO create function that will get the player's current position, and spawn in the snake food not in this position
+  // playersPosition.push({ x: 2, y: 7 });
+
+  const snack = await loadTexture(
+    "/6-space-game/2-drawing-to-canvas/your-work/assets/cookie-solid.svg"
+  );
+
+  // for (let zzz = 0; playersPosition.length != 673; zzz++) {
+  createSnakeFood(ctx, playersPosition, snack); //this needs to run after the player is created and moved. The snake food MUST NOT overlap with the player
+  // }
+
+  console.log(playersPosition);
 };
