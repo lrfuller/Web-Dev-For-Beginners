@@ -1,15 +1,18 @@
 let x = 100;
 let y = 100;
+let trailX = x;
+let trailY = y;
 let snackX = 0;
 let snackY = 0;
 let radius = 0;
-let speed = 3;
+let speed = 2;
 let playerSize = 20;
 
 let upPressed = false;
 let downPressed = false;
 let leftPressed = false;
 let rightPressed = false;
+let raf;
 
 function loadTexture(path) {
   return new Promise((resolve) => {
@@ -72,18 +75,20 @@ window.onload = async () => {
   );
 
   function drawGame() {
-    requestAnimationFrame(drawGame);
+    window.requestAnimationFrame(drawGame);
+
     clearScreen();
     inputs();
     boundryCheck();
-    drawGreenBlob();
+    drawPlayer();
+    drawShadow();
     createSnakeFood(ctx, snack);
     // console.log("player x: " + x);
     // console.log("player y: " + y);
     // console.log("snack x: " + snackX);
     // console.log("snack y: " + snackY);
   }
-  createSnakeFood(ctx, snack);
+  // createSnakeFood(ctx, snack);
 
   function boundryCheck() {
     //up
@@ -107,29 +112,41 @@ window.onload = async () => {
   function inputs() {
     if (upPressed) {
       y = y - speed;
+      // trailY = y - speed + 25;
     }
     if (downPressed) {
       y = y + speed;
+      // trailY = y - speed - 25;
     }
     if (leftPressed) {
       x = x - speed;
+      // trailX = x - speed + 25;
     }
     if (rightPressed) {
       x = x + speed;
+      // trailX = x - speed - 25;
     }
   }
 
-  function drawGreenBlob() {
-    ctx.fillStyle = "green";
-
+  function drawPlayer() {
     ctx.beginPath();
-    // ctx.arc(x, y, radius, 0, Math.PI * 2);
-    roundedRect(ctx, x, y, playerSize, playerSize, 1);
+    // roundedRect(ctx, x, y, playerSize, playerSize, 1);
+    ctx.fillStyle = "black";
+    ctx.fillRect(x, y, playerSize, playerSize);
+    // ctx.arc(x, y, 60, 60, 3 * Math.PI);
     ctx.fill();
+    ctx.closePath();
+  }
+
+  function drawShadow() {
+    // ctx.beginPath();
+    // // roundedRect(ctx, trailX, trailY, playerSize, playerSize, 1);
+    // ctx.fillRect(trailX, trailY, playerSize, playerSize);
+    // ctx.closePath();
+    // ctx.fill();
   }
 
   function clearScreen() {
-    ctx.fillStyle = "rgba(253, 187, 45, 1)";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
