@@ -1,9 +1,17 @@
 const c = document.getElementById("canvas");
 const ctx = c.getContext("2d");
-const points = document.getElementById("points");
-const lives = document.getElementById("lives");
+const POINTS_ELEMENT = document.getElementById("points");
+const LIVES_ELEMENT = document.getElementById("lives");
 const PLAYER_SIZE = 100;
 const FOOD_SIZE = 50;
+const PLAYER_SPAWN = { x: 638, y: 30 };
+const moneyObj = [
+  { x: 25, y: 50 },
+  { x: 145, y: 50 },
+  { x: 380, y: 180 },
+  { x: 685, y: 180 },
+  { x: 50, y: 635 },
+];
 const BACKGROUND_CANVAS_COLOR = "pink";
 
 class GameObject {
@@ -32,8 +40,6 @@ class GameObject {
   }
 
   removeFromBoard() {
-    this.height = 0;
-    this.width = 0;
     this.x = -500;
     this.y = -500;
   }
@@ -49,6 +55,12 @@ class Cash extends GameObject {
     this.x = x;
     this.y = y;
   }
+  reset(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
 }
 
 class Movable extends GameObject {
@@ -56,7 +68,6 @@ class Movable extends GameObject {
     super(x, y, type);
     (this.width = PLAYER_SIZE), (this.height = PLAYER_SIZE);
     this.type = "Hero";
-    this.color = "green";
     this.speed = { x: 0, y: 0 };
     this.life = 5;
     this.points = 0;
@@ -90,6 +101,8 @@ class Movable extends GameObject {
 class Hero extends Movable {
   constructor(x, y) {
     super(x, y, "Hero");
+    LIVES_ELEMENT.textContent = "lives: " + this.life;
+    POINTS_ELEMENT.textContent = "points: " + this.points;
   }
   draw(ctx, color) {
     ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -108,7 +121,7 @@ class Hero extends Movable {
     hero.x = 638;
     hero.y = 30;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    //TODO loose life
+    LIVES_ELEMENT.textContent = "lives: " + this.life;
 
     if (this.life === 0) {
       this.dead = true;
@@ -117,7 +130,7 @@ class Hero extends Movable {
   }
   scorePoint() {
     this.points += 10;
-    //TODO score points on screen
+    POINTS_ELEMENT.textContent = "points: " + this.points;
   }
 }
 
@@ -153,7 +166,7 @@ const Messages = {
   PLAYER3_MOVE_UP: "PLAYER3_MOVE_UP",
   PLAYER3_MOVE_DOWN: "PLAYER3_MOVE_DOWN",
   COLLISION_WALL: "COLLISION_WALL",
-  COLLISION_POINT: "COLLISION_POINT",
+  COLLISION_CASH: "COLLISION_CASH",
 };
 let gameObjects = [],
   gameObjects_Original = [],
@@ -215,12 +228,12 @@ window.addEventListener("keydown", (evt) => {
 eventEmitter.on(Messages.COLLISION_WALL, (_, { wall }) => {
   hero.isDead();
 });
-eventEmitter.on(Messages.COLLISION_POINT, (_, { wall }) => {
+eventEmitter.on(Messages.COLLISION_CASH, (_, { cash }) => {
   hero.scorePoint();
+  cash.removeFromBoard();
 });
 
 let onKeyDown = function (e) {
-  // console.log(e.keyCode);
   switch (e.keyCode) {
     case 37:
     case 39:
@@ -254,15 +267,23 @@ function updateGameObjects() {
     }
   });
 
-  // cash.forEach((cash) => {
-  //   if (intersectRect(heroRect, cash.rectFromGameObject())) {
-  //     eventEmitter.emit(Messages.COLLISION_POINT, { cash });
-  //   }
-  // });
+  cash.forEach((cash) => {
+    if (intersectRect(heroRect, cash.rectFromGameObject())) {
+      eventEmitter.emit(Messages.COLLISION_CASH, { cash });
+    }
+  });
+
+  checkWinCondition();
 }
 
 window.addEventListener("keydown", onKeyDown);
-const hero = new Hero(638, 30);
+const hero = new Hero(PLAYER_SPAWN.x, PLAYER_SPAWN.y);
+
+const money1 = new Cash(25, 50, FOOD_SIZE, FOOD_SIZE);
+const money2 = new Cash(145, 50, FOOD_SIZE, FOOD_SIZE);
+const money3 = new Cash(380, 180, FOOD_SIZE, FOOD_SIZE);
+const money4 = new Cash(685, 180, FOOD_SIZE, FOOD_SIZE);
+const money5 = new Cash(50, 630, FOOD_SIZE, FOOD_SIZE);
 
 const horizontal1 = new GameObject(0, 748, 768, 20);
 const horizontal2 = new GameObject(0, 0, 768, 20);
@@ -278,10 +299,16 @@ const veritcal5 = new GameObject(200, 0, 20, 180);
 const veritcal6 = new GameObject(580, 350, 20, 200);
 const veritcal7 = new GameObject(0, 0, 20, 400);
 
-const money1 = new Cash(100, 100, 50, 50);
+hero.color = "green"; //don't ask why this works this way
+money5.color = "black";
 
-gameObjects.push(money1);
 gameObjects.push(hero);
+gameObjects.push(money1);
+gameObjects.push(money2);
+gameObjects.push(money3);
+gameObjects.push(money4);
+gameObjects.push(money5);
+
 gameObjects.push(veritcal1);
 gameObjects.push(veritcal2);
 gameObjects.push(veritcal3);
@@ -296,9 +323,49 @@ gameObjects.push(horizontal5);
 
 gameObjects_Original = gameObjects;
 
-//TODO
-function winCondition() {
-  if (hero.x < 10 && hero.y < 500 && hero.y < 748) {
+function redrawPoints() {
+  money1.reset(
+    moneyObj[0].x,
+    moneyObj[0].y,
+    moneyObj[0].width,
+    moneyObj[0].height
+  );
+  money2.reset(
+    moneyObj[1].x,
+    moneyObj[1].y,
+    moneyObj[1].width,
+    moneyObj[1].height
+  );
+  money3.reset(
+    moneyObj[2].x,
+    moneyObj[2].y,
+    moneyObj[2].width,
+    moneyObj[2].height
+  );
+  money4.reset(
+    moneyObj[3].x,
+    moneyObj[3].y,
+    moneyObj[3].width,
+    moneyObj[3].height
+  );
+  money5.reset(
+    moneyObj[4].x,
+    moneyObj[4].y,
+    moneyObj[4].width,
+    moneyObj[4].height
+  );
+}
+
+function checkWinCondition() {
+  if (hero.y > 500 && hero.y < 748 && hero.x < 50) {
+    hero.points += 100;
+    POINTS_ELEMENT.textContent = "points: " + hero.points;
+    console.log("passed!");
+    hero.x = PLAYER_SPAWN.x;
+    hero.y = PLAYER_SPAWN.y;
+    redrawPoints();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    moveSnake();
   }
 }
 
@@ -311,16 +378,14 @@ function intersectRect(r1, r2) {
   );
 }
 function drawGameObjects(ctx) {
-  console.log(gameObjects);
   gameObjects.forEach((go) => go.draw(ctx, go.color));
 }
 
 function moveSnake() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // ctx.fillStyle = "teal";
+  ctx.fillStyle = "teal";
 
   ctx.fillRect(hero.x, hero.y, hero.width, hero.height);
-
   updateGameObjects();
   drawGameObjects(ctx);
 }
