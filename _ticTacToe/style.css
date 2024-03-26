@@ -1,0 +1,35 @@
+
+.gridWrapper{
+    width: 350px;
+    margin: auto;
+    margin-top: 15px;
+    text-align: center;
+}
+.gameGridStyle{
+    height: 320px;
+    width: 320px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    border: 1px solid black;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: white;
+    transition: all 0.4s ease;
+}
+.item{
+    border: solid 1px black;
+}
+.fa-times{
+    font-size: 100px;
+}
+.fa-circle-o{
+    font-size: 80px;
+    margin-top:10px;
+}
+#winnerText{
+    margin-top:55px;
+    text-align: center;
+    font-size: 30px;
+}
