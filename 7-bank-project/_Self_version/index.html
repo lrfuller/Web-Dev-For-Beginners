@@ -3,6 +3,11 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <!-- <title id="appTitle"></title> -->
+        <style>
+            #errorText{
+                color:red;
+            }
+        </style>
     </head>
     <body>
         <div id="app">Loading...</div>
@@ -10,12 +15,13 @@
             <h1>Bank App</h1>
             <section>
                 <h2>Login</h2>
-                <form id="loginForm">
+                <form id="loginForm" action="javascript:login()">
                     <label for="username">Username</label>
-                    <input id="username" name="user" type="text">
+                    <input id="username" name="user" type="text" required>
+                    <div id="loginError" class="errorText"></div>
                     <button>Login</button>
                 </form>
-                <a href="/dashboard" onclick="onLinkClick(event)">Login</a>
+
                 <hr />
                 <h2>Register</h2>
                 <form id="registerForm" action="javascript:register()">
@@ -32,6 +38,7 @@
                     <input id="balance" name="balance" type="number" value="0">
                     <button>Register</button>
                 </form>
+                <div id="registrationError" class="errorText"></div>
             </section>
         </template>
 
@@ -42,9 +49,12 @@
                 <br>
                 <a href="/profile" onclick="onLinkClick(event)">Profile</a>
             </header>
+            <br>
             <section>
-                Balance: 100$
+                Balance: <span id="currency"></span><span id="balance"></span>
             </section>
+            <h2>Description</h2>
+            <h5 id="description"></h5>
             <section>
                 <h2>Transactions</h2>
                 <table>
@@ -55,7 +65,15 @@
                             <th>Amount</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody id="transactions">
+                        <template id="transaction">
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </template>
+                    </tbody>
                 </table>
             </section>
         </template>
