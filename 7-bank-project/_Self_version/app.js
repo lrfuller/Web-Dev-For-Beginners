@@ -1,4 +1,5 @@
 let account = null;
+const ACCOUNTS_API = "//localhost:5000/api/accounts/";
 
 function updateElement(id, textOrNode) {
   const element = document.getElementById(id);
@@ -14,7 +15,6 @@ const routes = {
 };
 
 // navigation
-
 function navigate(path) {
   window.history.pushState({}, path, path);
   updateRoute();
@@ -51,7 +51,7 @@ window.onpopstate = () => updateRoute();
 
 async function createAccount(account) {
   try {
-    const response = await fetch("//localhost:5000/api/accounts", {
+    const response = await fetch(ACCOUNTS_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: account,
@@ -82,9 +82,7 @@ async function register() {
 
 async function getAccount(user) {
   try {
-    const response = await fetch(
-      "//localhost:5000/api/accounts/" + encodeURIComponent(user)
-    );
+    const response = await fetch(ACCOUNTS_API + encodeURIComponent(user));
     return await response.json();
   } catch (error) {
     return { error: error.message || "Unknown error" };
