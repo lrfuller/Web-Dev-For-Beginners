@@ -1,5 +1,8 @@
-let account = null;
+let state = Object.freeze({
+  account: null,
+});
 const ACCOUNTS_API = "//localhost:5000/api/accounts/";
+const storageKey = "savedAccount";
 
 function updateElement(id, textOrNode) {
   const element = document.getElementById(id);
@@ -10,7 +13,7 @@ function updateElement(id, textOrNode) {
 
 const routes = {
   "/login": { templateId: "login" },
-  "/dashboard": { templateId: "dashboard", init: updateDashboard },
+  "/dashboard": { templateId: "dashboard", init: refresh },
   "/profile": { templateId: "profile" },
 };
 
@@ -30,7 +33,10 @@ function updateRoute() {
   const route = routes[path];
 
   if (!route) {
+    // return navigate("index.html");
+    // setTimeout(() => {
     return navigate("/login");
+    // }, 1000);
   }
 
   const template = document.getElementById(route.templateId);
@@ -44,8 +50,8 @@ function updateRoute() {
     route.init();
   }
 }
-updateRoute("login");
-window.onpopstate = () => updateRoute();
+// updateRoute("login");
+// window.onpopstate = () => updateRoute();
 
 //REGISTRATION
 
@@ -74,7 +80,7 @@ async function register() {
   }
 
   console.log("Account created!", result);
-  account = result;
+  updateState("account", result);
   navigate("/dashboard");
 }
 
@@ -98,7 +104,7 @@ async function login() {
     return updateElement("loginError", data.error);
   }
 
-  account = data;
+  updateState("account", data);
   navigate("/dashboard");
 }
 
@@ -109,12 +115,14 @@ function createTransactionRow(transaction) {
   tr.children[0].textContent = transaction.date;
   tr.children[1].textContent = transaction.object;
   tr.children[2].textContent = transaction.amount.toFixed(2);
+  tr.setAttribute("id", "transaction");
   return transactionRow;
 }
 
 function updateDashboard() {
+  const account = state.account;
   if (!account) {
-    return navigate("/login");
+    return logout();
   }
   const transactionsRows = document.createDocumentFragment();
   for (const transaction of account.transactions) {
@@ -126,4 +134,105 @@ function updateDashboard() {
   updateElement("description", account.description);
   updateElement("balance", account.balance.toFixed(2));
   updateElement("currency", account.currency);
+}
+
+function logout() {
+  updateState("account", null);
+  navigate("/login");
+}
+
+function updateState(property, newData) {
+  state = Object.freeze({
+    ...state,
+    [property]: newData,
+  });
+  localStorage.setItem(storageKey, JSON.stringify(state.account));
+}
+
+function init() {
+  const savedAccount = localStorage.getItem(storageKey);
+  if (savedAccount) {
+    updateState("account", JSON.parse(savedAccount));
+  }
+
+  // Our previous initialization code
+  window.onpopstate = () => updateRoute();
+  updateRoute();
+}
+
+init();
+
+async function updateAccountData() {
+  const account = state.account;
+  if (!account) {
+    return logout();
+  }
+
+  const data = await getAccount(account.user);
+  if (data.error) {
+    return logout();
+  }
+
+  updateState("account", data);
+}
+
+async function refresh() {
+  await updateAccountData();
+  updateDashboard();
+}
+
+async function addTransaction(event) {
+  event.preventDefault();
+  const transactionForm = document.getElementById("transactionForm");
+  const formData = new FormData(transactionForm);
+  const data = Object.fromEntries(formData);
+  const jsonData = JSON.stringify(data);
+  const result = await postTransaction(jsonData);
+
+  if (result.error) {
+    return updateElement("registrationError", result.error);
+  }
+
+  console.log("transaction Added!", result);
+  updateState("account", result);
+  // navigate("/dashboard");
+}
+
+async function postTransaction(transaction) {
+  try {
+    const response = await fetch(
+      "//localhost:5000/api/accounts/" + state.account.user + "/transactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: transaction,
+      }
+    );
+    const transactionList = document.querySelectorAll("[id=transaction]");
+    const lastTransaction = transactionList[transactionList.length - 1];
+    const parsedTransaction = JSON.parse(transaction);
+    let tr = document.createElement("tr");
+    tr.setAttribute("class", "table-info");
+    let td1 = document.createElement("td");
+    td1.setAttribute("class", "table-info");
+    td1.innerText = parsedTransaction.date;
+
+    let td2 = document.createElement("td");
+    td2.setAttribute("class", "table-info");
+    td2.innerText = parsedTransaction.object;
+
+    let td3 = document.createElement("td");
+    td3.setAttribute("class", "table-info");
+    td3.innerText = Number.parseInt(parsedTransaction.amount).toFixed(2);
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    lastTransaction.after(tr);
+
+    document.getElementById("transactionForm").reset();
+
+    return await response.json();
+  } catch (error) {
+    return { error: error.message || "Unknown error" };
+  }
 }
